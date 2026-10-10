@@ -34,7 +34,10 @@ const PORT = env.PORT;
 */
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: [
+      "http://localhost:5174",
+      env.FRONTEND_URL,
+    ],
     credentials: true,
   })
 );
