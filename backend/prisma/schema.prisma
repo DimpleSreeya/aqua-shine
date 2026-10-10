@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum VehicleType {
+  HATCHBACK
+  SEDAN
+  SUV
+  MUV
+  LUXURY
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  name         String
+  email        String @unique
+  passwordHash String
+
+  role Role @default(USER)
+
+  phone    String?
+  location String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles Vehicle[]
+  bookings Booking[]
+}
+
+model Service {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prices   ServicePrice[]
+  bookings Booking[]
+}
+
+model ServicePrice {
+  id          Int         @id @default(autoincrement())
+  serviceId   Int
+  vehicleType VehicleType
+  pricePaise  Int
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, vehicleType])
+}
+
+model Vehicle {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  carName     String
+  carNumber   String      @unique
+  vehicleType VehicleType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+}
+
+model Slot {
+  id        Int     @id @default(autoincrement())
+  date      String
+  startTime String
+  endTime   String
+  isOpen    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@unique([date, startTime])
+}
+
+model Worker {
+  id    Int    @id @default(autoincrement())
+  name  String
+  phone String @unique
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id Int @id @default(autoincrement())
+
+  userId    Int
+  vehicleId Int
+  serviceId Int
+  slotId    Int
+  workerId  Int?
+
+  pricePaise Int
+
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  slot    Slot    @relation(fields: [slotId], references: [id], onDelete: Restrict)
+  worker  Worker? @relation(fields: [workerId], references: [id], onDelete: SetNull)
+}
